@@ -1,7 +1,10 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.db import connection
-from .models import Board 
+from .models import Board,Comment
 from django.core.paginator import Paginator
+from django.http import HttpResponse, Http404
+import os
+from django.db.models import F
 
 def board_list(request):
     cursor = connection.cursor()
@@ -38,11 +41,24 @@ def board_list(request):
 
 def board_view(request):
     alert=''
+    if request.method == 'POST':
+        bNum = request.POST.get('b_num')
+        Comment.objects.create(
+                    post = bNum,
+                    user = request.session.get('user'),
+                    content = request.POST.get('comment'),
+        )
+        cursor = connection.cursor()
+        sql = f'update board set comment = comment+1 where b_num = {bNum}'
+        cursor.execute(sql)
+
+        alert = {'msg':'댓글을 작성했습니다.', 'url':'/board/view?b_num='+bNum}
+        return render(request, 'alert.html', alert)
     if request.GET.get('b_num'):
         bNum = request.GET.get('b_num')
         
         cursor = connection.cursor()
-        sql = f'select title,email,content,v_num,write_time from board where b_num = {bNum} and d_check=true'
+        sql = f'select title,email,content,v_num,write_time,file_name,file_path,comment from board where b_num = {bNum} and d_check=true'
         cursor.execute(sql)
         board = cursor.fetchall()
         
@@ -53,6 +69,12 @@ def board_view(request):
                 sql = f'update board set v_num = v_num+1 where b_num = {bNum}'
                 cursor.execute(sql)
                 v_num += 1
+            comment = board[0][7]
+            if comment != 0:
+                comments = Comment.objects.filter(post=bNum)
+            else:
+                comments = []
+            print(comment)
             # 데이터 저장
             content = {
                 'title':board[0][0], 
@@ -60,7 +82,10 @@ def board_view(request):
                 'content':board[0][2], 
                 'v_num':v_num, 
                 'write_time':board[0][4],
-                'b_num':bNum
+                'b_num':bNum,
+                'file_name':board[0][5],
+                'file_path':board[0][6],
+                'comments':comments
                 }
         else:
             #글이 존재하지 않을 때
@@ -80,11 +105,22 @@ def board_write(request):
             r_content = request.POST.get('content')
             
             if r_title.strip() !='' and r_content.strip() != '':
-                Board.objects.create(
+                uploaded_file = request.FILES.get('file')
+                print(uploaded_file)
+                if uploaded_file != None:
+                    Board.objects.create(
                     title = r_title,
                     content = r_content,
-                    email = request.session.get('user')
-                )   
+                    email = request.session.get('user'),
+                    file_name=uploaded_file,
+                    file_path=uploaded_file
+                ) 
+                else:
+                    Board.objects.create(
+                        title = r_title,
+                        content = r_content,
+                        email = request.session.get('user') 
+                    )   
                 alert = {'msg':'글 작성 완료', 'url':'/board/list?page=1'}
             else:
                 #제목과 내용이 공백일 경우
@@ -159,3 +195,21 @@ def board_delete(request):
         #파라미터 값이 없을 때
         alert = {'msg':'잘못된 접근 입니다.', 'url':'/board/list?page=1'}
     return render(request, 'alert.html', alert)
+
+def download_file(request, filename, bnum):
+    # 파일 이름으로 레코드 검색
+    file_record = get_object_or_404(Board, file_name=filename, b_num = bnum)
+    print(file_record)
+    # 실제 파일 경로
+    file_path = file_record.file_path.path  # 파일의 절대 경로
+    
+    # 파일이 존재하는지 확인
+    
+    # 파일 확인 및 반환
+    if os.path.exists(file_path):
+        with open(file_path, 'rb') as f:
+            response = HttpResponse(f.read(), content_type='application/octet-stream')
+            response['Content-Disposition'] = f'attachment; filename="{os.path.basename(file_path)}"'
+            return response
+    else:
+        raise Http404("File not found")

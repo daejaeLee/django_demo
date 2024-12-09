@@ -11,4 +11,5 @@ urlpatterns = [
     path('write', views.board_write, name='board_write'),
     path('update', views.board_update, name='board_update'),
     path('delete', views.board_delete, name='board_delete'),
+    path('download/<str:filename>/<int:bnum>', views.download_file, name='download_file'),
 ]

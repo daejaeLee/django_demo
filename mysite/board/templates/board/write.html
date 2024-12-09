@@ -24,7 +24,7 @@
 </head>
 <body>
     <h1 align='center'>글을 써보자 <h1>
-    <form method="POST" action="{% url 'board:board_write'%}" name="write_frm" onsubmit="writeCheck();">
+    <form method="POST" action="{% url 'board:board_write'%}" name="write_frm" onsubmit="writeCheck();" enctype="multipart/form-data">
         {% csrf_token %}
     <table align='center' border='1'>
         <tr>
@@ -33,6 +33,8 @@
                 placeholder='제목을 입력해 주세요.'>
         <tr>
             <td align='center' colspan='2'>내용
+        <tr>
+            <td colspan='2'><input type="file" name="file">
         <tr>
             <td colspan='2'>
             <textarea name='content' cols="100" rows='30' maxlength='5000'
