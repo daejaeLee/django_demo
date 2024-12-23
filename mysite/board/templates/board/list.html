@@ -7,7 +7,7 @@
 <body>
     {% if request.session.user %}
         <p align='right' style='margin-right:30px;'>
-            {{request.session.user}}
+            <a href='/mypage'>{{request.session.user}}</a>
     {% else %}
         <p align='right' style='margin-right:30px;'>
             비회원

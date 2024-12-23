@@ -4,7 +4,6 @@ from .models import Board,Comment
 from django.core.paginator import Paginator
 from django.http import HttpResponse, Http404
 import os
-from django.db.models import F
 
 def board_list(request):
     cursor = connection.cursor()

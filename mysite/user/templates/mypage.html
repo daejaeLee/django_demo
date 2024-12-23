@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>MyPage</title>
+</head>
+<body>
+    {% if request.session.user %}
+        <h1> {{ request.session.user }}의 페이지 </h1>
+        <p>Email: {{ request.session.user }}</p> 
+        <p>이름: {{ name }}</p> 
+        <p><input type='button' value='게시판'  onclick="location.href='/board/list?page=1'">
+        <p><input type='button' value='비밀번호 변경'  onclick="location.href='pwchange'">
+        <p><input type='button' value='로그아웃'  onclick="location.href={% url 'accounts:logout' %} ">
+        
+    {% endif %}
+</body>
+</html>
+
+
+

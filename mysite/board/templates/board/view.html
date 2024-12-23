@@ -24,7 +24,7 @@
         {%endif%}
         <tr>
             <td colspan='2'>
-            {{content}}
+            {{content|safe}}
         <tr>
             <form method="POST" action="{% url 'board:board_view'%}" name="coment_frm">
             {% csrf_token %}
